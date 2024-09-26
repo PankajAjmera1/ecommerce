@@ -2,6 +2,8 @@ import User from "../models/user.schema.js";
 import asyncHandler from "../service/asyncHandler.js";
 import CustomError from "../utils/CustomError.js";
 import mailHelper from "../utils/mailHelper.js";
+import crypto from "crypto"
+
 
 
 // cookie options
@@ -162,4 +164,48 @@ export const forgotPassword =asyncHandler(async(req,res) =>{
         await user.save({validateBeforeSave:false})
         throw new CustomError(error.message||"Email not sent",500)
     }
+})
+
+
+//reset password
+export const resetPassword =asyncHandler(async(req,res) =>{
+    const {token:resetToken} = req.params
+    const{password}=req.body
+    if(!password){
+        throw new CustomError("Password is required",400)
+    }
+
+    const resetPasswordToken=crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex")
+
+    const user = await User.findOne({
+        forgotPasswordToken:resetPasswordToken,
+        forgotPasswordExpiry:{$gt:Date.now()}
+    })
+    if(!user){
+        throw new CustomError("Token is invalid or expired",400)
+    }
+
+    //safety
+    user.password = password
+    user.forgotPasswordToken = undefined
+    user.forgotPasswordExpiry = undefined
+    await user.save()
+
+    const token = user.getJWTToken()
+    res.cookie("token",token,cookieOptions)
+
+
+    res.status(200).json({
+        success:true,
+        message:"Password reset successfully"
+
+    })
+
+
+    
+
+    
 })

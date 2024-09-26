@@ -3,7 +3,7 @@ import CustomError from "../utils/CustomError.js";
 import asyncHandler from "../service/asyncHandler.js";
 
 
-
+//create coupon
 export const createCoupon = asyncHandler(async (req, res) => {
     const { code, discount } = req.body;
 
@@ -29,6 +29,42 @@ export const createCoupon = asyncHandler(async (req, res) => {
     });
 })
 
+//update coupon
+export const updateCoupon = asyncHandler(async (req, res) => {
+
+    
+    
+    const { id:couponId } = req.params;
+    const {action} = req.body;
+
+
+    const coupon = await Coupon.findByIdAndUpdate(
+        couponId,
+        {
+            active:action
+        },
+        {
+            new: true,
+            runValidators: true
+        }
+    )
+
+    if (!coupon) {
+        throw new CustomError("Coupon not found", 404);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Coupon updated successfully",
+        coupon
+    })
+
+
+
+
+})
+
+
 //get all coupons
 
 export const getAllCoupons =asyncHandler(async (req, res) => {
@@ -45,37 +81,6 @@ export const getAllCoupons =asyncHandler(async (req, res) => {
 })
 
 
-//update coupon
-export const updateCoupon = asyncHandler(async (req, res) => {
-
-    const { code, discount } = req.body;
-    const { id:couponId } = req.params;
-
-    if (!code || !discount) {
-        throw new CustomError("All fields are required", 400);
-    }
-
-    const updatedCoupon = await Coupon.findOneAndUpdate(
-        { _id: couponId },
-
-        {code,discount},
-
-        { new:true,
-          runValidators:true
-        }
-    );
-    if (!updatedCoupon) {
-        throw new CustomError("Coupon not found", 404);
-    }
-
-    res.status(200).json({
-        success: true,
-        message: "Coupon updated successfully",
-        updatedCoupon
-    });
-
-
-})
 
 
 //delete coupon
@@ -83,16 +88,16 @@ export const updateCoupon = asyncHandler(async (req, res) => {
 export const deleteCoupon = asyncHandler(async (req, res) => {
     const { id:couponId } = req.params;
 
-    const coupon = await Coupon.findById(couponId);
+    const coupon = await Coupon.findByIdAndDelete(couponId);
 
     if (!coupon) {
         throw new CustomError("Coupon not found", 404);
     }
 
-    await coupon.remove();
     res.status(200).json({
         success: true,
-        message: "Coupon deleted successfully"
+        message: "Coupon deleted successfully",
+        coupon
     })
 
 })
