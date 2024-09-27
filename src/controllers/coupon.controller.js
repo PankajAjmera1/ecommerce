@@ -102,3 +102,31 @@ export const deleteCoupon = asyncHandler(async (req, res) => {
 
 })
 
+
+//disable coupon
+export const disableCoupon = asyncHandler(async (req, res) => {
+    const { id:couponId } = req.params;
+
+    const coupon = await Coupon.findByIdAndUpdate(
+        couponId,
+        {
+            active:false
+        },
+        {
+            new: true,
+            runValidators: true
+        }
+    )
+
+    if (!coupon) {
+        throw new CustomError("Coupon not found", 404);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Coupon disabled successfully",
+        coupon
+    })
+    
+})
+
